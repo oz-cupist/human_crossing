@@ -1,0 +1,19 @@
+{
+  "name": "admin",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "keystone dev",
+    "build": "keystone build",
+    "start": "keystone start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@keystone-6/core": "^6.5.1",
+    "@types/node": "^25.5.0",
+    "typescript": "^5.9.3"
+  }
+}
