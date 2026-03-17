@@ -11,7 +11,7 @@ export default config({
     enableLogging: true,
   },
   server: {
-    port: 4000,
+    port: 4002,
   },
   lists: {
     Player: buildKeystoneList(PLAYER_TABLE, PLAYER_FIELDS),
