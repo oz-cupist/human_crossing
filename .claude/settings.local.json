@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__notion__API-post-search",
+      "mcp__notion__API-get-block-children",
+      "Bash(jq:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 5 npm run start:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "notion",
+    "blender"
+  ]
+}
