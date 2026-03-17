@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {
+        "NOTION_TOKEN": "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"
+      }
+    },
+    "blender": {
+      "command": "uvx",
+      "args": ["blender-mcp"]
+    }
+  }
+}
