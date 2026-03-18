@@ -15,10 +15,12 @@
     "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "incremental": true,
     "noImplicitAny": false,
     "strictNullChecks": true,
     "strictBindCallApply": true
+  },
+  "ts-node": {
+    "swc": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

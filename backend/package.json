@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "nest start --watch",
+    "dev": "nodemon --exec ts-node src/main.ts",
     "build": "nest build",
     "start": "node dist/main.js",
     "start:prod": "node dist/main.js"
@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "Human Crossing Game Server",
   "dependencies": {
+    "@colyseus/schema": "^4.0.19",
     "@colyseus/ws-transport": "^0.17.9",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
@@ -28,8 +29,14 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
+    "@swc/core": "^1.15.18",
+    "@swc/helpers": "^0.5.19",
     "@types/node": "^25.5.0",
     "@types/pg": "^8.18.0",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
