@@ -22,16 +22,16 @@ Human Crossing은 동물의 숲에서 영감을 받은 **웹 기반 3D 멀티플
 
 ## 기술 스택
 
-| 구분 | 기술 | 버전 |
-| --- | --- | --- |
-| **Frontend** | React + Vite + TypeScript | React 19, Vite 8 |
-| **Styling** | styled-components | 6.x |
-| **Backend** | Express + TypeScript | Express 5 |
-| **Game Server** | Colyseus | 0.17 |
-| **Database** | PostgreSQL (Docker) | 16-alpine |
-| **DB Access** | pg (Raw SQL) / Prisma (ORM) | pg 8 / Prisma 5 |
-| **API Docs** | Swagger (OpenAPI 3.0) | swagger-jsdoc 6 |
-| **Admin** | KeystoneJS 6 | 6.x |
+| 구분            | 기술                        | 버전             |
+| --------------- | --------------------------- | ---------------- |
+| **Frontend**    | React + Vite + TypeScript   | React 19, Vite 8 |
+| **Styling**     | styled-components           | 6.x              |
+| **Backend**     | Express + TypeScript        | Express 5        |
+| **Game Server** | Colyseus                    | 0.17             |
+| **Database**    | PostgreSQL (Docker)         | 16-alpine        |
+| **DB Access**   | pg (Raw SQL) / Prisma (ORM) | pg 8 / Prisma 5  |
+| **API Docs**    | Swagger (OpenAPI 3.0)       | swagger-jsdoc 6  |
+| **Admin**       | KeystoneJS 6                | 6.x              |
 
 ---
 
@@ -82,9 +82,19 @@ human_crossing/
 
 ### 사전 요구사항
 
-- **Node.js** 18+
+- **Node.js 22+** (백엔드 Colyseus 요구사항)
+- **nvm** (Node Version Manager) — 프로젝트별 Node 버전 관리
 - **Docker** (PostgreSQL 컨테이너용)
-- **npm** 또는 **yarn**
+- **yarn**
+
+> ⚠️ **Node 버전 주의**: 백엔드는 **Node.js 22 이상**이 필요합니다.
+> `backend/.nvmrc` 파일이 있으므로, 백엔드 폴더에서 `nvm use`를 실행하면 자동으로 올바른 버전으로 전환됩니다.
+>
+> ```bash
+> cd backend
+> nvm use        # .nvmrc를 읽어 Node 22로 전환
+> node -v        # v22.x.x 확인
+> ```
 
 ### 1. 저장소 클론
 
@@ -105,7 +115,8 @@ PostgreSQL이 `localhost:5433`에서 실행됩니다.
 
 ```bash
 cd backend
-npm install
+nvm use          # Node 22로 전환 (필수!)
+yarn install
 ```
 
 `.env` 파일 생성:
@@ -113,7 +124,7 @@ npm install
 ```env
 DATABASE_URL=postgresql://human_crossing:human_crossing@localhost:5433/human_crossing
 NODE_ENV=development
-PORT=2567
+PORT=4001
 ```
 
 DB 마이그레이션:
@@ -126,20 +137,20 @@ npx prisma generate
 백엔드 실행:
 
 ```bash
-npm run dev
+yarn dev
 ```
 
-서버가 `http://localhost:2567`에서 실행됩니다.
+서버가 `http://localhost:4001`에서 실행됩니다.
 
 ### 4. 프론트엔드 설정
 
 ```bash
 cd frontend
-npm install
-npm run dev
+yarn install
+yarn dev
 ```
 
-프론트엔드가 `http://localhost:3000`에서 실행됩니다.
+프론트엔드가 `http://localhost:4000`에서 실행됩니다.
 
 ### 5. (선택) KeystoneJS 어드민 패널
 
@@ -148,7 +159,7 @@ cd backend/admin
 npx keystone dev
 ```
 
-어드민 패널이 `http://localhost:4000`에서 실행됩니다.
+어드민 패널이 `http://localhost:4002`에서 실행됩니다.
 
 ---
 
@@ -156,17 +167,17 @@ npx keystone dev
 
 ### 엔드포인트
 
-| Method | Endpoint | 설명 |
-| --- | --- | --- |
-| POST | `/api/players/join` | 닉네임으로 가입/로그인 |
-| GET | `/api/players` | 전체 플레이어 목록 조회 |
-| GET | `/api/players/:id` | 단건 플레이어 조회 |
-| GET | `/health` | 서버 상태 확인 |
+| Method | Endpoint            | 설명                    |
+| ------ | ------------------- | ----------------------- |
+| POST   | `/api/players/join` | 닉네임으로 가입/로그인  |
+| GET    | `/api/players`      | 전체 플레이어 목록 조회 |
+| GET    | `/api/players/:id`  | 단건 플레이어 조회      |
+| GET    | `/health`           | 서버 상태 확인          |
 
 ### Swagger UI
 
 ```
-http://localhost:2567/api-docs
+http://localhost:4001/api-docs
 ```
 
 모든 API의 요청/응답 형태를 확인하고 직접 테스트할 수 있습니다.
@@ -176,18 +187,18 @@ http://localhost:2567/api-docs
 ## 아키텍처
 
 ```
-[브라우저] → [Vite Proxy :3000] → [Express :2567] → [pg Pool] → [PostgreSQL :5433]
+[브라우저] → [Vite Proxy :4000] → [NestJS :4001] → [pg Pool] → [PostgreSQL :5433]
                                         │                              ↑
-                                   [Colyseus]                   [KeystoneJS :4000]
+                                   [Colyseus]                   [KeystoneJS :4002]
                                    (WebSocket)
 ```
 
-- **서비스 레이어 패턴**: Route → Service → DB (비즈니스 로직 분리)
-- **DTO/Mapper 패턴**: DB row를 API 친화적 구조로 변환
+- **NestJS 모듈 구조**: Module → Controller → Service (DI 기반)
+- **DTO 패턴**: class-validator + @nestjs/swagger 데코레이터
 - **공유 스키마**: `player.schema.ts`를 기반으로 KeystoneJS 어드민 자동 생성
-- **글로벌 에러 핸들링**: 커스텀 에러 클래스 + 미들웨어
-- **Graceful Shutdown**: DB 연결 정리 + HTTP 서버 안전 종료
-- **Raw SQL / Prisma 전환**: 주석 전환으로 ORM ↔ Raw SQL 교체 가능
+- **글로벌 에러 핸들링**: ExceptionFilter 기반 에러 처리
+- **Graceful Shutdown**: NestJS 라이프사이클 (OnModuleDestroy)
+- **Raw SQL**: pg Pool을 Global DatabaseModule로 DI
 
 자세한 아키텍처 설명은 [백엔드 아키텍처 가이드](docs/backend-architecture.md)를 참고하세요.
 
@@ -203,16 +214,16 @@ docker compose down -v         # 컨테이너 + 데이터 삭제
 
 # Backend
 cd backend
-npm run dev                    # 개발 서버 실행
-npm run build                  # 빌드
+nvm use                        # Node 22로 전환 (필수!)
+yarn dev                       # 개발 서버 실행 (nodemon + tsx)
+yarn build                     # 프로덕션 빌드 (nest build)
 npx prisma migrate dev         # DB 마이그레이션
 npx prisma generate            # Prisma 타입 생성
-npx prisma studio              # Prisma DB GUI
 
 # Frontend
 cd frontend
-npm run dev                    # 개발 서버 실행
-npm run build                  # 프로덕션 빌드
+yarn dev                       # 개발 서버 실행
+yarn build                     # 프로덕션 빌드
 
 # Admin
 cd backend/admin
