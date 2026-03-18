@@ -1,7 +1,13 @@
-import { Module, Global, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Pool } from 'pg';
+import {
+  Module,
+  Global,
+  Inject,
+  OnModuleInit,
+  OnModuleDestroy,
+} from "@nestjs/common";
+import { Pool } from "pg";
 
-const DATABASE_POOL = 'DATABASE_POOL';
+const DATABASE_POOL = "DATABASE_POOL";
 
 @Global()
 @Module({
@@ -18,22 +24,21 @@ const DATABASE_POOL = 'DATABASE_POOL';
   exports: [DATABASE_POOL],
 })
 export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
-  constructor() {}
+  constructor(@Inject(DATABASE_POOL) private readonly pool: Pool) {}
 
   async onModuleInit() {
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    const client = await pool.connect();
+    const client = await this.pool.connect();
     try {
-      await client.query('SELECT 1');
-      console.log('✅ PostgreSQL 연결 성공');
+      await client.query("SELECT 1");
+      console.log("✅ PostgreSQL 연결 성공");
     } finally {
       client.release();
-      await pool.end();
     }
   }
 
   async onModuleDestroy() {
-    console.log('🔌 PostgreSQL 연결 해제');
+    await this.pool.end();
+    console.log("🔌 PostgreSQL 연결 해제");
   }
 }
 
