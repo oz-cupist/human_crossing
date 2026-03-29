@@ -10,12 +10,13 @@ import {
 } from "../api/guestbook";
 
 const Card = styled.div`
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
   border-radius: 24px;
   padding: 24px;
   max-width: 500px;
   width: 100%;
+  color: #2d3436;
 `;
 
 const Header = styled.div`
@@ -40,15 +41,15 @@ const WriteForm = styled.form`
 const TextInput = styled.input`
   flex: 1;
   padding: 10px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  background: rgba(255, 255, 255, 0.6);
+  color: #2d3436;
   font-size: 14px;
   outline: none;
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(0, 0, 0, 0.35);
   }
 `;
 
@@ -64,11 +65,11 @@ const SmallButton = styled.button`
 `;
 
 const SubmitButton = styled(SmallButton)`
-  background: rgba(255, 255, 255, 0.25);
-  color: white;
+  background: rgba(0, 0, 0, 0.08);
+  color: #2d3436;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(0, 0, 0, 0.14);
   }
 
   &:disabled {
@@ -80,7 +81,7 @@ const SubmitButton = styled(SmallButton)`
 const EntryItem = styled.div`
   padding: 12px 14px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.03);
   margin-bottom: 8px;
 
   &:last-child {
@@ -120,11 +121,11 @@ const Actions = styled.div`
 const ActionButton = styled(SmallButton)`
   padding: 4px 10px;
   font-size: 11px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  background: rgba(0, 0, 0, 0.06);
+  color: #2d3436;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.1);
   }
 `;
 

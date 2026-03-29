@@ -11,7 +11,7 @@ const Container = styled.div`
   align-items: center;
   min-height: 100vh;
   padding: 40px 20px;
-  background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+  background: url("/animal_crossing_sky.png") no-repeat center center / cover;
   color: white;
   font-family:
     "Pretendard",
@@ -22,14 +22,15 @@ const Container = styled.div`
 `;
 
 const WelcomeCard = styled.div`
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
   border-radius: 24px;
   padding: 32px 40px;
   text-align: center;
   max-width: 500px;
   width: 100%;
   margin-bottom: 24px;
+  color: #2d3436;
 `;
 
 const Nickname = styled.h1`
@@ -53,12 +54,14 @@ const SectionTitle = styled.h2`
 `;
 
 const PlayerListCard = styled.div`
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
   border-radius: 24px;
   padding: 24px;
   max-width: 500px;
   width: 100%;
+  color: #2d3436;
+  margin-bottom: 24px;
 `;
 
 const PlayerItem = styled.div<{ $isMe: boolean }>`
@@ -68,7 +71,7 @@ const PlayerItem = styled.div<{ $isMe: boolean }>`
   padding: 12px 16px;
   border-radius: 12px;
   background: ${({ $isMe }) =>
-    $isMe ? "rgba(255, 255, 255, 0.25)" : "rgba(255, 255, 255, 0.08)"};
+    $isMe ? "rgba(0, 0, 0, 0.08)" : "rgba(0, 0, 0, 0.03)"};
   margin-bottom: 8px;
 
   &:last-child {
@@ -87,7 +90,7 @@ const PlayerDate = styled.span`
 `;
 
 const Badge = styled.span`
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.08);
   padding: 2px 8px;
   border-radius: 8px;
   font-size: 11px;
@@ -101,18 +104,20 @@ const EmptyText = styled.p`
 `;
 
 const RefreshButton = styled.button`
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #2d3436;
   padding: 8px 16px;
   border-radius: 10px;
   font-size: 13px;
   cursor: pointer;
   margin-left: auto;
   transition: background 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.1);
   }
 `;
 
@@ -132,15 +137,15 @@ const ButtonRow = styled.div`
 const ActionButton = styled.button`
   padding: 8px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.06);
+  color: #2d3436;
   font-size: 13px;
   cursor: pointer;
   transition: background 0.2s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.1);
   }
 `;
 
@@ -154,16 +159,16 @@ const DangerButton = styled(ActionButton)`
 
 const EditInput = styled.input`
   padding: 8px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  background: rgba(255, 255, 255, 0.6);
+  color: #2d3436;
   font-size: 16px;
   text-align: center;
   outline: none;
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(0, 0, 0, 0.35);
   }
 `;
 
@@ -230,23 +235,39 @@ export function GameScreen() {
             />
             <ButtonRow>
               <ActionButton onClick={handleNicknameUpdate}>저장</ActionButton>
-              <ActionButton onClick={() => { setIsEditingNickname(false); setEditError(null); }}>
+              <ActionButton
+                onClick={() => {
+                  setIsEditingNickname(false);
+                  setEditError(null);
+                }}
+              >
                 취소
               </ActionButton>
             </ButtonRow>
-            {editError && <Info style={{ color: "#e74c3c", opacity: 1 }}>{editError}</Info>}
+            {editError && (
+              <Info style={{ color: "#e74c3c", opacity: 1 }}>{editError}</Info>
+            )}
           </>
         ) : (
           <>
             <Nickname>{player.nickname}</Nickname>
-            <Info>ID: {player.id}</Info>
-            <Info>가입일: {new Date(player.joinedAt).toLocaleString("ko-KR")}</Info>
+            {/* <Info>ID: {player.id}</Info> */}
+            <Info>
+              가입일: {new Date(player.joinedAt).toLocaleString("ko-KR")}
+            </Info>
             <ButtonRow>
-              <ActionButton onClick={() => { setIsEditingNickname(true); setNewNickname(player.nickname); }}>
+              <ActionButton
+                onClick={() => {
+                  setIsEditingNickname(true);
+                  setNewNickname(player.nickname);
+                }}
+              >
                 닉네임 변경
               </ActionButton>
               <ActionButton onClick={logout}>로그아웃</ActionButton>
-              <DangerButton onClick={handleDeleteAccount}>회원탈퇴</DangerButton>
+              <DangerButton onClick={handleDeleteAccount}>
+                회원탈퇴
+              </DangerButton>
             </ButtonRow>
           </>
         )}
