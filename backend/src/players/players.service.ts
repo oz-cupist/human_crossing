@@ -41,7 +41,7 @@ export class PlayersService {
       if (!player.pinHash) {
         const pinHash = await bcrypt.hash(pin, 10);
         const { rows } = await this.pool.query<PlayerRow>(
-          `UPDATE players SET "pinHash" = $2, "lastLoginAt" = NOW() WHERE id = $1 RETURNING *`,
+          `UPDATE players SET "pinHash" = $2, "lastLoginAt" = NOW() AT TIME ZONE 'Asia/Seoul' WHERE id = $1 RETURNING *`,
           [player.id, pinHash],
         );
         return {
@@ -58,7 +58,7 @@ export class PlayersService {
       }
 
       const { rows } = await this.pool.query<PlayerRow>(
-        `UPDATE players SET "lastLoginAt" = NOW() WHERE id = $1 RETURNING *`,
+        `UPDATE players SET "lastLoginAt" = NOW() AT TIME ZONE 'Asia/Seoul' WHERE id = $1 RETURNING *`,
         [player.id],
       );
 
@@ -74,7 +74,7 @@ export class PlayersService {
       const pinHash = await bcrypt.hash(pin, 10);
       const { rows } = await this.pool.query<PlayerRow>(
         `INSERT INTO players (id, nickname, "pinHash", "joinedAt", "lastLoginAt", "lastPositionX", "lastPositionY", "lastPositionZ")
-         VALUES (gen_random_uuid(), $1, $2, NOW(), NOW(), 0, 0, 0)
+         VALUES (gen_random_uuid(), $1, $2, NOW() AT TIME ZONE 'Asia/Seoul', NOW() AT TIME ZONE 'Asia/Seoul', 0, 0, 0)
          RETURNING *`,
         [validated, pinHash],
       );

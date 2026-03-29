@@ -14,6 +14,7 @@ generator client {
 model Player {
   id            String    @id @default(cuid())
   nickname      String    @unique @default("")
+  pinHash       String    @default("")
   joinedAt      DateTime? @default(now()) @map("joinedAt")
   lastLoginAt   DateTime? @default(now()) @map("lastLoginAt")
   lastPositionX Float?    @default(0) @map("lastPositionX")
@@ -21,4 +22,14 @@ model Player {
   lastPositionZ Float?    @default(0) @map("lastPositionZ")
 
   @@map("players")
+}
+
+model Guestbook {
+  id        String    @id @default(cuid())
+  authorId  String    @default("")
+  content   String    @default("")
+  createdAt DateTime? @default(now()) @map("createdAt")
+  updatedAt DateTime? @default(now()) @map("updatedAt")
+
+  @@map("guestbook")
 }
