@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { useGame } from "../contexts/GameContext";
 import { getPlayers } from "../api/player";
 import type { PlayerData } from "../types/player";
+import { GuestbookPanel } from "./GuestbookPanel";
 
 const Container = styled.div`
   display: flex;
@@ -121,10 +122,58 @@ const ListHeader = styled.div`
   margin-bottom: 16px;
 `;
 
+const ButtonRow = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: center;
+`;
+
+const ActionButton = styled.button`
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+`;
+
+const DangerButton = styled(ActionButton)`
+  border-color: rgba(231, 76, 60, 0.4);
+
+  &:hover {
+    background: rgba(231, 76, 60, 0.3);
+  }
+`;
+
+const EditInput = styled.input`
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 16px;
+  text-align: center;
+  outline: none;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+`;
+
 export function GameScreen() {
-  const { player } = useGame();
+  const { player, updateNickname, deleteAccount, logout } = useGame();
   const [players, setPlayers] = useState<PlayerData[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [newNickname, setNewNickname] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
 
   const fetchPlayers = async () => {
     setLoadingList(true);
@@ -144,12 +193,63 @@ export function GameScreen() {
 
   if (!player) return null;
 
+  const handleNicknameUpdate = async () => {
+    if (!newNickname.trim()) return;
+    setEditError(null);
+    try {
+      await updateNickname(newNickname.trim());
+      setIsEditingNickname(false);
+      setNewNickname("");
+      fetchPlayers();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "닉네임 변경 실패");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm("정말 탈퇴하시겠습니까? 모든 데이터가 삭제됩니다.")) return;
+    try {
+      await deleteAccount();
+    } catch (err) {
+      console.error("회원탈퇴 실패:", err);
+    }
+  };
+
   return (
     <Container>
       <WelcomeCard>
-        <Nickname>{player.nickname}</Nickname>
-        <Info>ID: {player.id}</Info>
-        <Info>가입일: {new Date(player.joinedAt).toLocaleString("ko-KR")}</Info>
+        {isEditingNickname ? (
+          <>
+            <EditInput
+              value={newNickname}
+              onChange={(e) => setNewNickname(e.target.value)}
+              placeholder="새 닉네임"
+              maxLength={20}
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && handleNicknameUpdate()}
+            />
+            <ButtonRow>
+              <ActionButton onClick={handleNicknameUpdate}>저장</ActionButton>
+              <ActionButton onClick={() => { setIsEditingNickname(false); setEditError(null); }}>
+                취소
+              </ActionButton>
+            </ButtonRow>
+            {editError && <Info style={{ color: "#e74c3c", opacity: 1 }}>{editError}</Info>}
+          </>
+        ) : (
+          <>
+            <Nickname>{player.nickname}</Nickname>
+            <Info>ID: {player.id}</Info>
+            <Info>가입일: {new Date(player.joinedAt).toLocaleString("ko-KR")}</Info>
+            <ButtonRow>
+              <ActionButton onClick={() => { setIsEditingNickname(true); setNewNickname(player.nickname); }}>
+                닉네임 변경
+              </ActionButton>
+              <ActionButton onClick={logout}>로그아웃</ActionButton>
+              <DangerButton onClick={handleDeleteAccount}>회원탈퇴</DangerButton>
+            </ButtonRow>
+          </>
+        )}
       </WelcomeCard>
 
       <PlayerListCard>
@@ -176,6 +276,8 @@ export function GameScreen() {
           </PlayerItem>
         ))}
       </PlayerListCard>
+
+      <GuestbookPanel />
     </Container>
   );
 }

@@ -89,11 +89,14 @@ const ErrorMessage = styled.p`
 export function NicknameScreen() {
   const { join, isLoading, error } = useGame();
   const [nickname, setNickname] = useState("");
+  const [pin, setPin] = useState("");
+
+  const isValid = nickname.trim().length > 0 && /^\d{4,6}$/.test(pin);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (nickname.trim() && !isLoading) {
-      join(nickname.trim());
+    if (isValid && !isLoading) {
+      join(nickname.trim(), pin);
     }
   };
 
@@ -112,7 +115,17 @@ export function NicknameScreen() {
             autoFocus
             disabled={isLoading}
           />
-          <Button type="submit" $isLoading={isLoading} disabled={isLoading || !nickname.trim()}>
+          <Input
+            type="password"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="PIN 번호 (4~6자리 숫자)"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            maxLength={6}
+            disabled={isLoading}
+          />
+          <Button type="submit" $isLoading={isLoading} disabled={isLoading || !isValid}>
             {isLoading ? "접속 중..." : "시작하기"}
           </Button>
           {error && <ErrorMessage>{error}</ErrorMessage>}
