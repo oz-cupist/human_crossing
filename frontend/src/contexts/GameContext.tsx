@@ -1,13 +1,16 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import type { PlayerData } from "../types/player";
-import { joinPlayer } from "../api/player";
+import { joinPlayer, updatePlayerNickname, deletePlayer } from "../api/player";
 
 interface GameContextValue {
   player: PlayerData | null;
   isGameStarted: boolean;
   isLoading: boolean;
   error: string | null;
-  join: (nickname: string) => Promise<void>;
+  join: (nickname: string, pin: string) => Promise<void>;
+  updateNickname: (nickname: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
+  logout: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -18,12 +21,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const join = useCallback(async (nickname: string) => {
+  const join = useCallback(async (nickname: string, pin: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await joinPlayer(nickname);
+      const response = await joinPlayer(nickname, pin);
       setPlayer(response.player);
       setIsGameStarted(true);
     } catch (err) {
@@ -33,8 +36,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updateNickname = useCallback(async (nickname: string) => {
+    if (!player) return;
+    const updated = await updatePlayerNickname(player.id, nickname);
+    setPlayer(updated);
+  }, [player]);
+
+  const deleteAccount = useCallback(async () => {
+    if (!player) return;
+    await deletePlayer(player.id);
+    setPlayer(null);
+    setIsGameStarted(false);
+  }, [player]);
+
+  const logout = useCallback(() => {
+    setPlayer(null);
+    setIsGameStarted(false);
+    setError(null);
+  }, []);
+
   return (
-    <GameContext.Provider value={{ player, isGameStarted, isLoading, error, join }}>
+    <GameContext.Provider value={{ player, isGameStarted, isLoading, error, join, updateNickname, deleteAccount, logout }}>
       {children}
     </GameContext.Provider>
   );

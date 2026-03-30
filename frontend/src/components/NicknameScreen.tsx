@@ -8,7 +8,7 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #a8e6cf 0%, #88d8a8 50%, #69c98e 100%);
+  background: url("/animal_crossing_pattern.jpg") repeat;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
 `;
 
@@ -89,19 +89,22 @@ const ErrorMessage = styled.p`
 export function NicknameScreen() {
   const { join, isLoading, error } = useGame();
   const [nickname, setNickname] = useState("");
+  const [pin, setPin] = useState("");
+
+  const isValid = nickname.trim().length > 0 && /^\d{4,6}$/.test(pin);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (nickname.trim() && !isLoading) {
-      join(nickname.trim());
+    if (isValid && !isLoading) {
+      join(nickname.trim(), pin);
     }
   };
 
   return (
     <Container>
       <Card>
-        <Title>Human Crossing</Title>
-        <Subtitle>브라우저에서 만나는 3D 커뮤니티</Subtitle>
+        <Title>혜원 & OO의 결혼식</Title>
+        <Subtitle>함께 축하해 주실 거죠?</Subtitle>
         <Form onSubmit={handleSubmit}>
           <Input
             type="text"
@@ -112,7 +115,17 @@ export function NicknameScreen() {
             autoFocus
             disabled={isLoading}
           />
-          <Button type="submit" $isLoading={isLoading} disabled={isLoading || !nickname.trim()}>
+          <Input
+            type="password"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="PIN 번호 (4~6자리 숫자)"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            maxLength={6}
+            disabled={isLoading}
+          />
+          <Button type="submit" $isLoading={isLoading} disabled={isLoading || !isValid}>
             {isLoading ? "접속 중..." : "시작하기"}
           </Button>
           {error && <ErrorMessage>{error}</ErrorMessage>}

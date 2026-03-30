@@ -4,14 +4,17 @@ import {
   BadRequestException,
   ConflictException,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { Pool } from "pg";
+import * as bcrypt from "bcryptjs";
 import { DATABASE_POOL } from "../database/database.module";
 import { PlayerDto, JoinResponseDto } from "./dto/player-response.dto";
 
 interface PlayerRow {
   id: string;
   nickname: string;
+  pinHash: string | null;
   joinedAt: Date | string;
   lastLoginAt: Date | string;
   lastPositionX: number;
@@ -23,7 +26,7 @@ interface PlayerRow {
 export class PlayersService {
   constructor(@Inject(DATABASE_POOL) private readonly pool: Pool) {}
 
-  async join(nickname: string): Promise<JoinResponseDto> {
+  async join(nickname: string, pin: string): Promise<JoinResponseDto> {
     const validated = this.validateNickname(nickname);
 
     const { rows: existing } = await this.pool.query<PlayerRow>(
@@ -32,9 +35,31 @@ export class PlayersService {
     );
 
     if (existing.length > 0) {
+      const player = existing[0];
+
+      // 기존 유저에 pinHash가 없으면 (레거시) PIN 설정
+      if (!player.pinHash) {
+        const pinHash = await bcrypt.hash(pin, 10);
+        const { rows } = await this.pool.query<PlayerRow>(
+          `UPDATE players SET "pinHash" = $2, "lastLoginAt" = NOW() AT TIME ZONE 'Asia/Seoul' WHERE id = $1 RETURNING *`,
+          [player.id, pinHash],
+        );
+        return {
+          message: "PIN이 설정되었습니다. 다시 오셨군요!",
+          player: this.toPlayerDto(rows[0]),
+          isNew: false,
+        };
+      }
+
+      // PIN 검증
+      const isValid = await bcrypt.compare(pin, player.pinHash);
+      if (!isValid) {
+        throw new UnauthorizedException("PIN이 일치하지 않습니다.");
+      }
+
       const { rows } = await this.pool.query<PlayerRow>(
-        `UPDATE players SET "lastLoginAt" = NOW() WHERE id = $1 RETURNING *`,
-        [existing[0].id],
+        `UPDATE players SET "lastLoginAt" = NOW() AT TIME ZONE 'Asia/Seoul' WHERE id = $1 RETURNING *`,
+        [player.id],
       );
 
       return {
@@ -44,12 +69,14 @@ export class PlayersService {
       };
     }
 
+    // 신규 가입
     try {
+      const pinHash = await bcrypt.hash(pin, 10);
       const { rows } = await this.pool.query<PlayerRow>(
-        `INSERT INTO players (id, nickname, "joinedAt", "lastLoginAt", "lastPositionX", "lastPositionY", "lastPositionZ")
-         VALUES (gen_random_uuid(), $1, NOW(), NOW(), 0, 0, 0)
+        `INSERT INTO players (id, nickname, "pinHash", "joinedAt", "lastLoginAt", "lastPositionX", "lastPositionY", "lastPositionZ")
+         VALUES (gen_random_uuid(), $1, $2, NOW() AT TIME ZONE 'Asia/Seoul', NOW() AT TIME ZONE 'Asia/Seoul', 0, 0, 0)
          RETURNING *`,
-        [validated],
+        [validated, pinHash],
       );
 
       return {
@@ -63,6 +90,41 @@ export class PlayersService {
       }
       throw error;
     }
+  }
+
+  async updateNickname(id: string, nickname: string): Promise<PlayerDto> {
+    const validated = this.validateNickname(nickname);
+
+    try {
+      const { rows } = await this.pool.query<PlayerRow>(
+        `UPDATE players SET nickname = $2 WHERE id = $1 RETURNING *`,
+        [id, validated],
+      );
+
+      if (rows.length === 0) {
+        throw new NotFoundException("플레이어를 찾을 수 없습니다.");
+      }
+
+      return this.toPlayerDto(rows[0]);
+    } catch (error: any) {
+      if (error.code === "23505") {
+        throw new ConflictException("이미 사용 중인 닉네임입니다.");
+      }
+      throw error;
+    }
+  }
+
+  async deletePlayer(id: string): Promise<{ message: string }> {
+    const { rows } = await this.pool.query<PlayerRow>(
+      `DELETE FROM players WHERE id = $1 RETURNING *`,
+      [id],
+    );
+
+    if (rows.length === 0) {
+      throw new NotFoundException("플레이어를 찾을 수 없습니다.");
+    }
+
+    return { message: "플레이어가 삭제되었습니다." };
   }
 
   async findAll(): Promise<PlayerDto[]> {

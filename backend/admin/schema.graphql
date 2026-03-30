@@ -4,6 +4,7 @@
 type Player {
   id: ID!
   nickname: String
+  pinHash: String
   joinedAt: DateTime
   lastLoginAt: DateTime
   lastPositionX: Float
@@ -24,6 +25,7 @@ input PlayerWhereInput {
   NOT: [PlayerWhereInput!]
   id: IDFilter
   nickname: StringFilter
+  pinHash: StringFilter
   joinedAt: DateTimeNullableFilter
   lastLoginAt: DateTimeNullableFilter
   lastPositionX: FloatNullableFilter
@@ -101,6 +103,7 @@ input FloatNullableFilter {
 input PlayerOrderByInput {
   id: OrderDirection
   nickname: OrderDirection
+  pinHash: OrderDirection
   joinedAt: OrderDirection
   lastLoginAt: OrderDirection
   lastPositionX: OrderDirection
@@ -115,6 +118,7 @@ enum OrderDirection {
 
 input PlayerUpdateInput {
   nickname: String
+  pinHash: String
   joinedAt: DateTime
   lastLoginAt: DateTime
   lastPositionX: Float
@@ -129,11 +133,62 @@ input PlayerUpdateArgs {
 
 input PlayerCreateInput {
   nickname: String
+  pinHash: String
   joinedAt: DateTime
   lastLoginAt: DateTime
   lastPositionX: Float
   lastPositionY: Float
   lastPositionZ: Float
+}
+
+type Guestbook {
+  id: ID!
+  authorId: String
+  content: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+input GuestbookWhereUniqueInput {
+  id: ID
+}
+
+input GuestbookWhereInput {
+  AND: [GuestbookWhereInput!]
+  OR: [GuestbookWhereInput!]
+  NOT: [GuestbookWhereInput!]
+  id: IDFilter
+  authorId: StringFilter
+  content: StringFilter
+  createdAt: DateTimeNullableFilter
+  updatedAt: DateTimeNullableFilter
+}
+
+input GuestbookOrderByInput {
+  id: OrderDirection
+  authorId: OrderDirection
+  content: OrderDirection
+  createdAt: OrderDirection
+  updatedAt: OrderDirection
+}
+
+input GuestbookUpdateInput {
+  authorId: String
+  content: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+input GuestbookUpdateArgs {
+  where: GuestbookWhereUniqueInput!
+  data: GuestbookUpdateInput!
+}
+
+input GuestbookCreateInput {
+  authorId: String
+  content: String
+  createdAt: DateTime
+  updatedAt: DateTime
 }
 
 """
@@ -148,12 +203,21 @@ type Mutation {
   updatePlayers(data: [PlayerUpdateArgs!]!): [Player]
   deletePlayer(where: PlayerWhereUniqueInput!): Player
   deletePlayers(where: [PlayerWhereUniqueInput!]!): [Player]
+  createGuestbook(data: GuestbookCreateInput!): Guestbook
+  createGuestbooks(data: [GuestbookCreateInput!]!): [Guestbook]
+  updateGuestbook(where: GuestbookWhereUniqueInput!, data: GuestbookUpdateInput!): Guestbook
+  updateGuestbooks(data: [GuestbookUpdateArgs!]!): [Guestbook]
+  deleteGuestbook(where: GuestbookWhereUniqueInput!): Guestbook
+  deleteGuestbooks(where: [GuestbookWhereUniqueInput!]!): [Guestbook]
 }
 
 type Query {
   player(where: PlayerWhereUniqueInput!): Player
   players(where: PlayerWhereInput! = {}, orderBy: [PlayerOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: PlayerWhereUniqueInput): [Player!]
   playersCount(where: PlayerWhereInput! = {}): Int
+  guestbook(where: GuestbookWhereUniqueInput!): Guestbook
+  guestbooks(where: GuestbookWhereInput! = {}, orderBy: [GuestbookOrderByInput!]! = [], take: Int, skip: Int! = 0, cursor: GuestbookWhereUniqueInput): [Guestbook!]
+  guestbooksCount(where: GuestbookWhereInput! = {}): Int
   keystone: KeystoneMeta!
 }
 
