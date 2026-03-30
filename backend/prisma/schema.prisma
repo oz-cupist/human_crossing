@@ -13,13 +13,24 @@ datasource db {
 }
 
 model Player {
-  id           String   @id @default(uuid())
-  nickname     String   @unique
-  joinedAt     DateTime @default(now())
-  lastLoginAt  DateTime @default(now())
-  lastPositionX Float   @default(0)
-  lastPositionY Float   @default(0)
-  lastPositionZ Float   @default(0)
+  id            String   @id @default(uuid())
+  nickname      String   @unique
+  pinHash       String?
+  joinedAt      DateTime @default(now())
+  lastLoginAt   DateTime @default(now())
+  lastPositionX Float    @default(0)
+  lastPositionY Float    @default(0)
+  lastPositionZ Float    @default(0)
 
   @@map("players")
+}
+
+model Guestbook {
+  id        String   @id @default(uuid())
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("guestbook")
 }

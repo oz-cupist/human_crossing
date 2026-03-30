@@ -8,6 +8,11 @@ export const PLAYER_FIELDS = {
     maxLength: 50,
     label: "닉네임",
   },
+  pinHash: {
+    type: "string" as const,
+    required: false,
+    label: "PIN 해시",
+  },
   joinedAt: {
     type: "timestamp" as const,
     defaultNow: true,
