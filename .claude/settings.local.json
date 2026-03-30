@@ -6,7 +6,16 @@
       "Bash(jq:*)",
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
-      "Bash(timeout 5 npm run start:*)"
+      "Bash(timeout 5 npm run start:*)",
+      "mcp__notion__API-update-a-block",
+      "mcp__notion__API-patch-block-children",
+      "mcp__blender__execute_blender_code",
+      "mcp__blender__get_viewport_screenshot",
+      "mcp__blender__get_scene_info",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
