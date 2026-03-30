@@ -19,8 +19,5 @@
     ]
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "notion",
-    "blender"
-  ]
+  "enabledMcpjsonServers": ["notion", "blender"]
 }
