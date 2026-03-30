@@ -24,7 +24,7 @@ export class GuestbookService {
   async create(authorId: string, content: string): Promise<GuestbookDto> {
     const { rows } = await this.pool.query<GuestbookRow>(
       `INSERT INTO guestbook (id, "authorId", content, "createdAt", "updatedAt")
-       VALUES (gen_random_uuid(), $1, $2, NOW(), NOW())
+       VALUES (gen_random_uuid(), $1, $2, NOW() AT TIME ZONE 'Asia/Seoul', NOW() AT TIME ZONE 'Asia/Seoul')
        RETURNING *, (SELECT nickname FROM players WHERE id = $1) AS "authorNickname"`,
       [authorId, content],
     );
@@ -63,7 +63,7 @@ export class GuestbookService {
     }
 
     const { rows } = await this.pool.query<GuestbookRow>(
-      `UPDATE guestbook SET content = $2, "updatedAt" = NOW() WHERE id = $1
+      `UPDATE guestbook SET content = $2, "updatedAt" = NOW() AT TIME ZONE 'Asia/Seoul' WHERE id = $1
        RETURNING *, (SELECT nickname FROM players WHERE id = guestbook."authorId") AS "authorNickname"`,
       [id, content],
     );
