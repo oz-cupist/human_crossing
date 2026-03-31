@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import styled from "styled-components";
-import { useGame } from "../contexts/GameContext";
+import { useGame } from "../contexts/useGame";
 import type { GuestbookEntry } from "../types/guestbook";
 import {
   getGuestbook,

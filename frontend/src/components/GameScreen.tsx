@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { useGame } from "../contexts/GameContext";
+import { useGame } from "../contexts/useGame";
 import { getPlayers } from "../api/player";
 import type { PlayerData } from "../types/player";
 import { GuestbookPanel } from "./GuestbookPanel";

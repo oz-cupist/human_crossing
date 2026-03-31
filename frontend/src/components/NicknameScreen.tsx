@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import styled from "styled-components";
-import { useGame } from "../contexts/GameContext";
+import { useGame } from "../contexts/useGame";
 
 const Container = styled.div`
   display: flex;

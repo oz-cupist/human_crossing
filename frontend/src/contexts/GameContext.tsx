@@ -1,19 +1,7 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import type { PlayerData } from "../types/player";
+import { useState, useCallback, type ReactNode } from "react";
 import { joinPlayer, updatePlayerNickname, deletePlayer } from "../api/player";
-
-interface GameContextValue {
-  player: PlayerData | null;
-  isGameStarted: boolean;
-  isLoading: boolean;
-  error: string | null;
-  join: (nickname: string, pin: string) => Promise<void>;
-  updateNickname: (nickname: string) => Promise<void>;
-  deleteAccount: () => Promise<void>;
-  logout: () => void;
-}
-
-const GameContext = createContext<GameContextValue | null>(null);
+import { GameContext } from "./game-context";
+import type { PlayerData } from "../types/player";
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [player, setPlayer] = useState<PlayerData | null>(null);
@@ -60,12 +48,4 @@ export function GameProvider({ children }: { children: ReactNode }) {
       {children}
     </GameContext.Provider>
   );
-}
-
-export function useGame(): GameContextValue {
-  const context = useContext(GameContext);
-  if (!context) {
-    throw new Error("useGame must be used within a GameProvider");
-  }
-  return context;
 }
