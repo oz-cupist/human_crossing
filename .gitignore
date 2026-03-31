@@ -45,3 +45,6 @@ pgdata/
 
 .mcp.json
 .claude/settings.local.json
+
+# Blender backup files
+*.blend1
