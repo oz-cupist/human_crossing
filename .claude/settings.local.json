@@ -15,9 +15,13 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(lsof:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": ["notion", "blender"]
+  "enabledMcpjsonServers": [
+    "notion",
+    "blender"
+  ]
 }

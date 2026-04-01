@@ -9,7 +9,11 @@ const Container = styled.div`
   justify-content: center;
   min-height: 100vh;
   background: url("/animal_crossing_pattern.jpg") repeat;
-  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    "Pretendard",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
 `;
 
 const Card = styled.div`
@@ -68,7 +72,9 @@ const Button = styled.button<{ $isLoading: boolean }>`
   font-size: 16px;
   font-weight: 700;
   cursor: ${({ $isLoading }) => ($isLoading ? "not-allowed" : "pointer")};
-  transition: background 0.2s, transform 0.1s;
+  transition:
+    background 0.2s,
+    transform 0.1s;
 
   &:hover:not(:disabled) {
     background: #3d9b6a;
@@ -103,8 +109,8 @@ export function NicknameScreen() {
   return (
     <Container>
       <Card>
-        <Title>혜원 & OO의 결혼식</Title>
-        <Subtitle>함께 축하해 주실 거죠?</Subtitle>
+        <Title>TITLE</Title>
+        <Subtitle>SUBTITLE</Subtitle>
         <Form onSubmit={handleSubmit}>
           <Input
             type="text"
@@ -121,11 +127,17 @@ export function NicknameScreen() {
             pattern="[0-9]*"
             placeholder="PIN 번호 (4~6자리 숫자)"
             value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={(e) =>
+              setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
             maxLength={6}
             disabled={isLoading}
           />
-          <Button type="submit" $isLoading={isLoading} disabled={isLoading || !isValid}>
+          <Button
+            type="submit"
+            $isLoading={isLoading}
+            disabled={isLoading || !isValid}
+          >
             {isLoading ? "접속 중..." : "시작하기"}
           </Button>
           {error && <ErrorMessage>{error}</ErrorMessage>}
