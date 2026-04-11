@@ -1,9 +1,10 @@
-import { Suspense, useEffect } from "react";
-import { Canvas } from "@react-three/fiber";
-import { Bounds, Html, OrbitControls, useGLTF, useProgress } from "@react-three/drei";
+import { Suspense, useEffect, useRef } from "react";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { Html, OrbitControls, useGLTF, useProgress, Sky } from "@react-three/drei";
 import * as THREE from "three";
 import styled from "styled-components";
 import worldModelUrl from "../assets/animal_crossing_world.glb?url";
+import { Player } from "./Player";
 
 const WORLD_MODEL_PATH = worldModelUrl;
 
@@ -93,51 +94,57 @@ function WorldModel() {
 }
 
 export function ThreeDWorldScreen() {
+
   return (
     <Screen>
       <Canvas
-        shadows
         dpr={[1, 1.75]}
-        camera={{ position: [12, 10, 12], fov: 42, near: 0.1, far: 500 }}
+        camera={{ position: [5, 6, 10], fov: 50, near: 0.1, far: 500 }}
       >
-        <color attach="background" args={["#b7e6ff"]} />
-        <fog attach="fog" args={["#b7e6ff", 50, 150]} />
-        <ambientLight intensity={1.3} />
+        <Sky
+          distance={450000}
+          sunPosition={[100, 60, 100]}
+          inclination={0.52}
+          azimuth={0.25}
+          rayleigh={0.5}
+          turbidity={8}
+          mieCoefficient={0.005}
+          mieDirectionalG={0.8}
+        />
+        <fog attach="fog" args={["#c8e6f8", 30, 90]} />
+        <ambientLight intensity={1.2} color="#f0f5ff" />
         <hemisphereLight
-          intensity={1}
-          color="#f5f9ff"
-          groundColor="#86ba6d"
+          intensity={0.9}
+          color="#87ceeb"
+          groundColor="#7ab856"
         />
         <directionalLight
-          castShadow
           position={[18, 22, 12]}
-          intensity={1.5}
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
+          intensity={1.8}
+          color="#fff5e6"
         />
         <Suspense fallback={<LoadingState />}>
-          <Bounds fit clip observe margin={1.12}>
-            <WorldModel />
-          </Bounds>
+          <WorldModel />
+          <Player />
         </Suspense>
         <OrbitControls
           makeDefault
           enableDamping
           dampingFactor={0.08}
-          minDistance={5}
-          maxDistance={70}
-          maxPolarAngle={Math.PI / 2.05}
-          target={[0, 2, 0]}
+          minDistance={3}
+          maxDistance={30}
+          maxPolarAngle={Math.PI / 2.2}
+          enablePan={false}
+          enableKeys={false}
+          target={[0, 1, 0]}
         />
       </Canvas>
 
       <OverlayCard>
-        <Title>Animal Crossing World</Title>
+        <Title>Human Crossing</Title>
         <Description>
-          저장소에 추가된 `animal_crossing_world.glb`를 그대로 로드한 3D 화면입니다.
-          마우스나 터치로 회전하고, 휠이나 핀치로 확대할 수 있습니다.
+          WASD 또는 방향키로 캐릭터를 움직여보세요.
         </Description>
-        <Hint>상단 스위처로 언제든 기존 로그인 이후 화면으로 돌아갈 수 있습니다.</Hint>
       </OverlayCard>
     </Screen>
   );
