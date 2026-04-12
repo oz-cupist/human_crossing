@@ -16,6 +16,7 @@ model Player {
   id            String      @id @default(uuid())
   nickname      String      @unique
   pinHash       String?
+  bio           String?     /// 자기소개 (선택)
   joinedAt      DateTime    @default(now())
   lastLoginAt   DateTime    @default(now())
   lastPositionX Float       @default(0)
