@@ -2,14 +2,14 @@ import { useRef, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF, useAnimations } from "@react-three/drei";
 import * as THREE from "three";
-import brideWalkUrl from "../assets/characters/bride_walking.glb?url";
+import puppyWalkUrl from "../assets/characters/puppy_walinkg.glb?url";
 
 const MOVE_SPEED = 2.5;
 const ROTATION_SPEED = 8;
 
 export function Player() {
   const group = useRef<THREE.Group>(null!);
-  const { scene, animations } = useGLTF(brideWalkUrl);
+  const { scene, animations } = useGLTF(puppyWalkUrl);
   const { actions, names } = useAnimations(animations, group);
   const keysRef = useRef({ forward: false, backward: false, left: false, right: false });
 
@@ -75,10 +75,10 @@ export function Player() {
   });
 
   return (
-    <group ref={group} position={[0, 0.3, 0]} scale={0.8}>
+    <group ref={group} position={[0, 0.3, 0]} scale={0.65}>
       <primitive object={scene} dispose={null} />
     </group>
   );
 }
 
-useGLTF.preload(brideWalkUrl);
+useGLTF.preload(puppyWalkUrl);

@@ -5,6 +5,7 @@ import * as THREE from "three";
 import styled from "styled-components";
 import worldModelUrl from "../assets/animal_crossing_world.glb?url";
 import { Player } from "./Player";
+import { WeddingCouple } from "./WeddingCouple";
 
 const WORLD_MODEL_PATH = worldModelUrl;
 
@@ -125,6 +126,7 @@ export function ThreeDWorldScreen() {
         />
         <Suspense fallback={<LoadingState />}>
           <WorldModel />
+          <WeddingCouple />
           <Player />
         </Suspense>
         <OrbitControls
