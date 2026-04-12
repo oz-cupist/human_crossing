@@ -1,46 +1,33 @@
 import {
   Injectable,
-  Inject,
   NotFoundException,
   ForbiddenException,
 } from "@nestjs/common";
-import { Pool } from "pg";
-import { DATABASE_POOL } from "../database/database.module";
+import { PrismaService } from "../database/prisma.service";
 import { GuestbookDto } from "./dto/guestbook-response.dto";
-
-interface GuestbookRow {
-  id: string;
-  authorId: string;
-  authorNickname: string;
-  content: string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
 
 @Injectable()
 export class GuestbookService {
-  constructor(@Inject(DATABASE_POOL) private readonly pool: Pool) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(authorId: string, content: string): Promise<GuestbookDto> {
-    const { rows } = await this.pool.query<GuestbookRow>(
-      `INSERT INTO guestbook (id, "authorId", content, "createdAt", "updatedAt")
-       VALUES (gen_random_uuid(), $1, $2, NOW() AT TIME ZONE 'Asia/Seoul', NOW() AT TIME ZONE 'Asia/Seoul')
-       RETURNING *, (SELECT nickname FROM players WHERE id = $1) AS "authorNickname"`,
-      [authorId, content],
-    );
+    // [Raw SQL] INSERT INTO guestbook (...) VALUES (...) RETURNING *, (SELECT nickname FROM players WHERE id = $1) AS "authorNickname"
+    const entry = await this.prisma.guestbook.create({
+      data: { authorId, content },
+      include: { author: { select: { nickname: true } } },
+    });
 
-    return this.toDto(rows[0]);
+    return this.toDto(entry);
   }
 
   async findAll(): Promise<GuestbookDto[]> {
-    const { rows } = await this.pool.query<GuestbookRow>(
-      `SELECT g.*, p.nickname AS "authorNickname"
-       FROM guestbook g
-       LEFT JOIN players p ON g."authorId" = p.id
-       ORDER BY g."createdAt" DESC`,
-    );
+    // [Raw SQL] SELECT g.*, p.nickname AS "authorNickname" FROM guestbook g LEFT JOIN players p ON g."authorId" = p.id ORDER BY g."createdAt" DESC
+    const entries = await this.prisma.guestbook.findMany({
+      include: { author: { select: { nickname: true } } },
+      orderBy: { createdAt: "desc" },
+    });
 
-    return rows.map((row) => this.toDto(row));
+    return entries.map((e) => this.toDto(e));
   }
 
   async update(
@@ -48,62 +35,60 @@ export class GuestbookService {
     authorId: string,
     content: string,
   ): Promise<GuestbookDto> {
-    // 소유권 확인
-    const { rows: existing } = await this.pool.query(
-      `SELECT "authorId" FROM guestbook WHERE id = $1`,
-      [id],
-    );
+    // [Raw SQL] SELECT "authorId" FROM guestbook WHERE id = $1
+    const existing = await this.prisma.guestbook.findUnique({ where: { id } });
 
-    if (existing.length === 0) {
+    if (!existing) {
       throw new NotFoundException("방명록을 찾을 수 없습니다.");
     }
 
-    if (existing[0].authorId !== authorId) {
+    if (existing.authorId !== authorId) {
       throw new ForbiddenException("본인의 방명록만 수정할 수 있습니다.");
     }
 
-    const { rows } = await this.pool.query<GuestbookRow>(
-      `UPDATE guestbook SET content = $2, "updatedAt" = NOW() AT TIME ZONE 'Asia/Seoul' WHERE id = $1
-       RETURNING *, (SELECT nickname FROM players WHERE id = guestbook."authorId") AS "authorNickname"`,
-      [id, content],
-    );
+    // [Raw SQL] UPDATE guestbook SET content = $2, "updatedAt" = NOW() WHERE id = $1 RETURNING *, (SELECT nickname ...) AS "authorNickname"
+    const updated = await this.prisma.guestbook.update({
+      where: { id },
+      data: { content },
+      include: { author: { select: { nickname: true } } },
+    });
 
-    return this.toDto(rows[0]);
+    return this.toDto(updated);
   }
 
   async delete(id: string, authorId: string): Promise<{ message: string }> {
-    const { rows: existing } = await this.pool.query(
-      `SELECT "authorId" FROM guestbook WHERE id = $1`,
-      [id],
-    );
+    // [Raw SQL] SELECT "authorId" FROM guestbook WHERE id = $1
+    const existing = await this.prisma.guestbook.findUnique({ where: { id } });
 
-    if (existing.length === 0) {
+    if (!existing) {
       throw new NotFoundException("방명록을 찾을 수 없습니다.");
     }
 
-    if (existing[0].authorId !== authorId) {
+    if (existing.authorId !== authorId) {
       throw new ForbiddenException("본인의 방명록만 삭제할 수 있습니다.");
     }
 
-    await this.pool.query(`DELETE FROM guestbook WHERE id = $1`, [id]);
+    // [Raw SQL] DELETE FROM guestbook WHERE id = $1
+    await this.prisma.guestbook.delete({ where: { id } });
 
     return { message: "방명록이 삭제되었습니다." };
   }
 
-  private toDto(row: GuestbookRow): GuestbookDto {
+  private toDto(entry: {
+    id: string;
+    authorId: string;
+    content: string;
+    createdAt: Date;
+    updatedAt: Date;
+    author: { nickname: string };
+  }): GuestbookDto {
     return {
-      id: row.id,
-      authorId: row.authorId,
-      authorNickname: row.authorNickname || "알 수 없음",
-      content: row.content,
-      createdAt:
-        row.createdAt instanceof Date
-          ? row.createdAt.toISOString()
-          : row.createdAt,
-      updatedAt:
-        row.updatedAt instanceof Date
-          ? row.updatedAt.toISOString()
-          : row.updatedAt,
+      id: entry.id,
+      authorId: entry.authorId,
+      authorNickname: entry.author.nickname,
+      content: entry.content,
+      createdAt: entry.createdAt.toISOString(),
+      updatedAt: entry.updatedAt.toISOString(),
     };
   }
 }

@@ -1,70 +1,57 @@
 import {
   Injectable,
-  Inject,
   BadRequestException,
   ConflictException,
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
-import { Pool } from "pg";
 import * as bcrypt from "bcryptjs";
-import { DATABASE_POOL } from "../database/database.module";
+import { PrismaService } from "../database/prisma.service";
 import { PlayerDto, JoinResponseDto } from "./dto/player-response.dto";
-
-interface PlayerRow {
-  id: string;
-  nickname: string;
-  pinHash: string | null;
-  joinedAt: Date | string;
-  lastLoginAt: Date | string;
-  lastPositionX: number;
-  lastPositionY: number;
-  lastPositionZ: number;
-}
 
 @Injectable()
 export class PlayersService {
-  constructor(@Inject(DATABASE_POOL) private readonly pool: Pool) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async join(nickname: string, pin: string): Promise<JoinResponseDto> {
     const validated = this.validateNickname(nickname);
 
-    const { rows: existing } = await this.pool.query<PlayerRow>(
-      `SELECT * FROM players WHERE nickname = $1`,
-      [validated],
-    );
+    // [Raw SQL] SELECT * FROM players WHERE nickname = $1
+    const existing = await this.prisma.player.findUnique({
+      where: { nickname: validated },
+    });
 
-    if (existing.length > 0) {
-      const player = existing[0];
-
+    if (existing) {
       // 기존 유저에 pinHash가 없으면 (레거시) PIN 설정
-      if (!player.pinHash) {
+      if (!existing.pinHash) {
         const pinHash = await bcrypt.hash(pin, 10);
-        const { rows } = await this.pool.query<PlayerRow>(
-          `UPDATE players SET "pinHash" = $2, "lastLoginAt" = NOW() AT TIME ZONE 'Asia/Seoul' WHERE id = $1 RETURNING *`,
-          [player.id, pinHash],
-        );
+        // [Raw SQL] UPDATE players SET "pinHash" = $2, "lastLoginAt" = NOW() WHERE id = $1 RETURNING *
+        const updated = await this.prisma.player.update({
+          where: { id: existing.id },
+          data: { pinHash, lastLoginAt: new Date() },
+        });
         return {
           message: "PIN이 설정되었습니다. 다시 오셨군요!",
-          player: this.toPlayerDto(rows[0]),
+          player: this.toPlayerDto(updated),
           isNew: false,
         };
       }
 
       // PIN 검증
-      const isValid = await bcrypt.compare(pin, player.pinHash);
+      const isValid = await bcrypt.compare(pin, existing.pinHash);
       if (!isValid) {
         throw new UnauthorizedException("PIN이 일치하지 않습니다.");
       }
 
-      const { rows } = await this.pool.query<PlayerRow>(
-        `UPDATE players SET "lastLoginAt" = NOW() AT TIME ZONE 'Asia/Seoul' WHERE id = $1 RETURNING *`,
-        [player.id],
-      );
+      // [Raw SQL] UPDATE players SET "lastLoginAt" = NOW() WHERE id = $1 RETURNING *
+      const updated = await this.prisma.player.update({
+        where: { id: existing.id },
+        data: { lastLoginAt: new Date() },
+      });
 
       return {
         message: "다시 오셨군요!",
-        player: this.toPlayerDto(rows[0]),
+        player: this.toPlayerDto(updated),
         isNew: false,
       };
     }
@@ -72,20 +59,21 @@ export class PlayersService {
     // 신규 가입
     try {
       const pinHash = await bcrypt.hash(pin, 10);
-      const { rows } = await this.pool.query<PlayerRow>(
-        `INSERT INTO players (id, nickname, "pinHash", "joinedAt", "lastLoginAt", "lastPositionX", "lastPositionY", "lastPositionZ")
-         VALUES (gen_random_uuid(), $1, $2, NOW() AT TIME ZONE 'Asia/Seoul', NOW() AT TIME ZONE 'Asia/Seoul', 0, 0, 0)
-         RETURNING *`,
-        [validated, pinHash],
-      );
+      // [Raw SQL] INSERT INTO players (...) VALUES (...) RETURNING *
+      const created = await this.prisma.player.create({
+        data: {
+          nickname: validated,
+          pinHash,
+        },
+      });
 
       return {
         message: "환영합니다!",
-        player: this.toPlayerDto(rows[0]),
+        player: this.toPlayerDto(created),
         isNew: true,
       };
     } catch (error: any) {
-      if (error.code === "23505") {
+      if (error.code === "P2002") {
         throw new ConflictException("이미 사용 중인 닉네임입니다.");
       }
       throw error;
@@ -96,18 +84,18 @@ export class PlayersService {
     const validated = this.validateNickname(nickname);
 
     try {
-      const { rows } = await this.pool.query<PlayerRow>(
-        `UPDATE players SET nickname = $2 WHERE id = $1 RETURNING *`,
-        [id, validated],
-      );
+      // [Raw SQL] UPDATE players SET nickname = $2 WHERE id = $1 RETURNING *
+      const updated = await this.prisma.player.update({
+        where: { id },
+        data: { nickname: validated },
+      });
 
-      if (rows.length === 0) {
+      return this.toPlayerDto(updated);
+    } catch (error: any) {
+      if (error.code === "P2025") {
         throw new NotFoundException("플레이어를 찾을 수 없습니다.");
       }
-
-      return this.toPlayerDto(rows[0]);
-    } catch (error: any) {
-      if (error.code === "23505") {
+      if (error.code === "P2002") {
         throw new ConflictException("이미 사용 중인 닉네임입니다.");
       }
       throw error;
@@ -115,36 +103,35 @@ export class PlayersService {
   }
 
   async deletePlayer(id: string): Promise<{ message: string }> {
-    const { rows } = await this.pool.query<PlayerRow>(
-      `DELETE FROM players WHERE id = $1 RETURNING *`,
-      [id],
-    );
-
-    if (rows.length === 0) {
-      throw new NotFoundException("플레이어를 찾을 수 없습니다.");
+    try {
+      // [Raw SQL] DELETE FROM players WHERE id = $1 RETURNING *
+      await this.prisma.player.delete({ where: { id } });
+      return { message: "플레이어가 삭제되었습니다." };
+    } catch (error: any) {
+      if (error.code === "P2025") {
+        throw new NotFoundException("플레이어를 찾을 수 없습니다.");
+      }
+      throw error;
     }
-
-    return { message: "플레이어가 삭제되었습니다." };
   }
 
   async findAll(): Promise<PlayerDto[]> {
-    const { rows } = await this.pool.query<PlayerRow>(
-      `SELECT * FROM players ORDER BY "joinedAt" DESC`,
-    );
-    return rows.map((row) => this.toPlayerDto(row));
+    // [Raw SQL] SELECT * FROM players ORDER BY "joinedAt" DESC
+    const players = await this.prisma.player.findMany({
+      orderBy: { joinedAt: "desc" },
+    });
+    return players.map((p) => this.toPlayerDto(p));
   }
 
   async findById(id: string): Promise<PlayerDto> {
-    const { rows } = await this.pool.query<PlayerRow>(
-      `SELECT * FROM players WHERE id = $1`,
-      [id],
-    );
+    // [Raw SQL] SELECT * FROM players WHERE id = $1
+    const player = await this.prisma.player.findUnique({ where: { id } });
 
-    if (rows.length === 0) {
+    if (!player) {
       throw new NotFoundException("플레이어를 찾을 수 없습니다.");
     }
 
-    return this.toPlayerDto(rows[0]);
+    return this.toPlayerDto(player);
   }
 
   async updatePosition(
@@ -153,31 +140,28 @@ export class PlayersService {
     y: number,
     z: number,
   ): Promise<void> {
-    await this.pool.query(
-      `UPDATE players
-       SET "lastPositionX" = $2, "lastPositionY" = $3, "lastPositionZ" = $4
-       WHERE nickname = $1`,
-      [nickname, x, y, z],
-    );
+    // [Raw SQL] UPDATE players SET "lastPositionX" = $2, ... WHERE nickname = $1
+    await this.prisma.player.update({
+      where: { nickname },
+      data: { lastPositionX: x, lastPositionY: y, lastPositionZ: z },
+    });
   }
 
   async getLastPosition(
     nickname: string,
   ): Promise<{ x: number; y: number; z: number }> {
-    const { rows } = await this.pool.query<
-      Pick<PlayerRow, "lastPositionX" | "lastPositionY" | "lastPositionZ">
-    >(
-      `SELECT "lastPositionX", "lastPositionY", "lastPositionZ"
-       FROM players WHERE nickname = $1`,
-      [nickname],
-    );
+    // [Raw SQL] SELECT "lastPositionX", ... FROM players WHERE nickname = $1
+    const player = await this.prisma.player.findUnique({
+      where: { nickname },
+      select: { lastPositionX: true, lastPositionY: true, lastPositionZ: true },
+    });
 
-    if (rows.length === 0) return { x: 0, y: 0, z: 0 };
+    if (!player) return { x: 0, y: 0, z: 0 };
 
     return {
-      x: rows[0].lastPositionX,
-      y: rows[0].lastPositionY,
-      z: rows[0].lastPositionZ,
+      x: player.lastPositionX,
+      y: player.lastPositionY,
+      z: player.lastPositionZ,
     };
   }
 
@@ -199,18 +183,22 @@ export class PlayersService {
     return trimmed;
   }
 
-  private toPlayerDto(row: PlayerRow): PlayerDto {
+  private toPlayerDto(player: {
+    id: string;
+    nickname: string;
+    joinedAt: Date;
+    lastPositionX: number;
+    lastPositionY: number;
+    lastPositionZ: number;
+  }): PlayerDto {
     return {
-      id: row.id,
-      nickname: row.nickname,
-      joinedAt:
-        row.joinedAt instanceof Date
-          ? row.joinedAt.toISOString()
-          : row.joinedAt,
+      id: player.id,
+      nickname: player.nickname,
+      joinedAt: player.joinedAt.toISOString(),
       lastPosition: {
-        x: row.lastPositionX,
-        y: row.lastPositionY,
-        z: row.lastPositionZ,
+        x: player.lastPositionX,
+        y: player.lastPositionY,
+        z: player.lastPositionZ,
       },
     };
   }

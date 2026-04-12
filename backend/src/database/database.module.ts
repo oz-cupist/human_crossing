@@ -6,6 +6,7 @@ import {
   OnModuleDestroy,
 } from "@nestjs/common";
 import { Pool } from "pg";
+import { PrismaService } from "./prisma.service";
 
 const DATABASE_POOL = "DATABASE_POOL";
 
@@ -20,8 +21,9 @@ const DATABASE_POOL = "DATABASE_POOL";
         });
       },
     },
+    PrismaService,
   ],
-  exports: [DATABASE_POOL],
+  exports: [DATABASE_POOL, PrismaService],
 })
 export class DatabaseModule implements OnModuleInit, OnModuleDestroy {
   constructor(@Inject(DATABASE_POOL) private readonly pool: Pool) {}

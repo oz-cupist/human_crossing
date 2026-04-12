@@ -7,11 +7,19 @@ import puppyWalkUrl from "../assets/characters/puppy_walinkg.glb?url";
 const MOVE_SPEED = 2.5;
 const ROTATION_SPEED = 8;
 
-export function Player() {
+const SIGNBOARD_POSITION = { x: 2, z: 5 };
+const PROXIMITY_THRESHOLD = 1.8;
+
+interface PlayerProps {
+  onSignboardProximity?: (isNear: boolean) => void;
+}
+
+export function Player({ onSignboardProximity }: PlayerProps) {
   const group = useRef<THREE.Group>(null!);
   const { scene, animations } = useGLTF(puppyWalkUrl);
   const { actions, names } = useAnimations(animations, group);
   const keysRef = useRef({ forward: false, backward: false, left: false, right: false });
+  const wasNearRef = useRef(false);
 
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
@@ -70,6 +78,20 @@ export function Player() {
     } else {
       if (names.length > 0) {
         actions[names[0]]!.setEffectiveTimeScale(0);
+      }
+    }
+
+    // 표지판 proximity 감지
+    if (onSignboardProximity) {
+      const pos = group.current.position;
+      const dx = pos.x - SIGNBOARD_POSITION.x;
+      const dz = pos.z - SIGNBOARD_POSITION.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      const isNear = dist < PROXIMITY_THRESHOLD;
+
+      if (isNear !== wasNearRef.current) {
+        wasNearRef.current = isNear;
+        onSignboardProximity(isNear);
       }
     }
   });

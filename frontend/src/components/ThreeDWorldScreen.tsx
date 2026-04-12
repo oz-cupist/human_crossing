@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF, useProgress, Sky } from "@react-three/drei";
 import * as THREE from "three";
@@ -6,6 +6,7 @@ import styled from "styled-components";
 import worldModelUrl from "../assets/animal_crossing_world.glb?url";
 import { Player } from "./Player";
 import { WeddingCouple } from "./WeddingCouple";
+import { GuestbookModal } from "./GuestbookModal";
 
 const WORLD_MODEL_PATH = worldModelUrl;
 
@@ -95,6 +96,15 @@ function WorldModel() {
 }
 
 export function ThreeDWorldScreen() {
+  const [showGuestbook, setShowGuestbook] = useState(false);
+  const [isNearSignboard, setIsNearSignboard] = useState(false);
+
+  const handleSignboardProximity = useCallback((isNear: boolean) => {
+    setIsNearSignboard(isNear);
+    if (isNear) {
+      setShowGuestbook(true);
+    }
+  }, []);
 
   return (
     <Screen>
@@ -127,7 +137,7 @@ export function ThreeDWorldScreen() {
         <Suspense fallback={<LoadingState />}>
           <WorldModel />
           <WeddingCouple />
-          <Player />
+          <Player onSignboardProximity={handleSignboardProximity} />
         </Suspense>
         <OrbitControls
           makeDefault
@@ -147,7 +157,14 @@ export function ThreeDWorldScreen() {
         <Description>
           WASD 또는 방향키로 캐릭터를 움직여보세요.
         </Description>
+        {isNearSignboard && !showGuestbook && (
+          <Hint>표지판 근처입니다! 클릭하여 방명록 열기</Hint>
+        )}
       </OverlayCard>
+
+      {showGuestbook && (
+        <GuestbookModal onClose={() => setShowGuestbook(false)} />
+      )}
     </Screen>
   );
 }
