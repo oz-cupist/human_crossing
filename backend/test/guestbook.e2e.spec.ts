@@ -2,6 +2,8 @@ import "reflect-metadata";
 import * as dotenv from "dotenv";
 dotenv.config();
 
+import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
+
 import { Test } from "@nestjs/testing";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import request from "supertest";
