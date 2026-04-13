@@ -8,6 +8,8 @@ export class PlayerState extends Schema {
   @type('number') x: number = 0;
   @type('number') y: number = 0;
   @type('number') z: number = 0;
+  @type('number') rotationY: number = 0;
+  @type('number') character: number = 0;
   @type('string') action: string = 'idle';
 }
 
@@ -27,19 +29,20 @@ export class GameRoom extends Room {
 
     this.onMessage(
       'move',
-      (client, data: { x: number; y: number; z: number; action: string }) => {
+      (client, data: { x: number; y: number; z: number; rotationY: number; action: string }) => {
         const player = this.state.players.get(client.sessionId);
         if (player) {
           player.x = data.x;
           player.y = data.y;
           player.z = data.z;
+          player.rotationY = data.rotationY ?? 0;
           player.action = data.action || 'idle';
         }
       },
     );
   }
 
-  async onJoin(client: Client, options: { nickname: string }) {
+  async onJoin(client: Client, options: { nickname: string; character?: number }) {
     const nickname = options.nickname || '익명';
     console.log(`👤 ${nickname} 접속 (${client.sessionId})`);
 
@@ -51,6 +54,7 @@ export class GameRoom extends Room {
     player.x = lastPosition.x;
     player.y = lastPosition.y;
     player.z = lastPosition.z;
+    player.character = options.character ?? 0;
     player.action = 'idle';
 
     this.state.players.set(client.sessionId, player);

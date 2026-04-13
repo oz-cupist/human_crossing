@@ -29,7 +29,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api-docs", app, document);
 
-  await app.listen(port);
+  await app.listen(port, "0.0.0.0");
 
   // Colyseus 게임 서버 설정 (listen 이후에 httpServer 접근)
   const httpServer = app.getHttpServer();

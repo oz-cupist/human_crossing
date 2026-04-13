@@ -1,13 +1,16 @@
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF, useProgress, Sky } from "@react-three/drei";
 import * as THREE from "three";
 import styled from "styled-components";
 import worldModelUrl from "../assets/animal_crossing_world.glb?url";
-import { Player } from "./Player";
+import { Player, CHARACTER_MODELS } from "./Player";
 import { WeddingCouple } from "./WeddingCouple";
 import { GuestbookModal } from "./GuestbookModal";
 import { VirtualJoystick, type JoystickInput } from "./VirtualJoystick";
+import { OtherPlayers } from "./OtherPlayers";
+import { useMultiplayer } from "../hooks/useMultiplayer";
+import { useGame } from "../contexts/useGame";
 
 const WORLD_MODEL_PATH = worldModelUrl;
 
@@ -119,11 +122,22 @@ function WorldModel() {
 }
 
 export function ThreeDWorldScreen() {
+  const { player } = useGame();
   const [showGuestbook, setShowGuestbook] = useState(false);
   const [isNearSignboard, setIsNearSignboard] = useState(false);
   const joystickRef = useRef<JoystickInput>({ x: 0, z: 0 });
   const playerPosRef = useRef<THREE.Vector3>(new THREE.Vector3(0, 0.3, 0));
   const orbitRef = useRef<any>(null!);
+
+  const characterIndex = useMemo(
+    () => Math.floor(Math.random() * CHARACTER_MODELS.length),
+    [],
+  );
+
+  const { remotePlayers, connected, sendPosition } = useMultiplayer(
+    player?.nickname,
+    characterIndex,
+  );
 
   const handleSignboardProximity = useCallback((isNear: boolean) => {
     setIsNearSignboard(isNear);
@@ -167,7 +181,14 @@ export function ThreeDWorldScreen() {
         <Suspense fallback={<LoadingState />}>
           <WorldModel />
           <WeddingCouple />
-          <Player onSignboardProximity={handleSignboardProximity} joystickInput={joystickRef} positionRef={playerPosRef} />
+          <Player
+            onSignboardProximity={handleSignboardProximity}
+            joystickInput={joystickRef}
+            positionRef={playerPosRef}
+            characterIndex={characterIndex}
+            onPositionUpdate={sendPosition}
+          />
+          <OtherPlayers players={remotePlayers} />
         </Suspense>
         <CameraFollow targetRef={playerPosRef} controlsRef={orbitRef} />
         <OrbitControls
@@ -188,6 +209,9 @@ export function ThreeDWorldScreen() {
         <Title>Human Crossing</Title>
         <Description>
           WASD 또는 방향키로 캐릭터를 움직여보세요.
+          {connected && (
+            <><br />접속 중: {remotePlayers.size + 1}명</>
+          )}
         </Description>
         {isNearSignboard && !showGuestbook && (
           <Hint>표지판 근처입니다! 클릭하여 방명록 열기</Hint>

@@ -12,25 +12,29 @@ import redPandaUrl from "../assets/characters/red_panda_walking.glb?url";
 import tigerUrl from "../assets/characters/tiger_walking.glb?url";
 import hamsterUrl from "../assets/characters/hamster_walking.glb?url";
 
-const CHARACTER_MODELS = [puppyUrl, fawnUrl, omoknuneUrl, penguinUrl, redPandaUrl, tigerUrl, hamsterUrl];
+export const CHARACTER_MODELS = [puppyUrl, fawnUrl, omoknuneUrl, penguinUrl, redPandaUrl, tigerUrl, hamsterUrl];
 
 const MOVE_SPEED = 2.5;
 const ROTATION_SPEED = 8;
 
 const SIGNBOARD_POSITION = { x: 2, z: 5 };
 const PROXIMITY_THRESHOLD = 1.8;
+const SEND_INTERVAL = 1 / 15; // 초당 15회 전송
 
 interface PlayerProps {
   onSignboardProximity?: (isNear: boolean) => void;
   joystickInput?: React.RefObject<JoystickInput>;
   positionRef?: React.RefObject<THREE.Vector3>;
+  characterIndex?: number;
+  onPositionUpdate?: (x: number, y: number, z: number, rotationY: number, action: string) => void;
 }
 
-export function Player({ onSignboardProximity, joystickInput, positionRef }: PlayerProps) {
+export function Player({ onSignboardProximity, joystickInput, positionRef, characterIndex, onPositionUpdate }: PlayerProps) {
   const group = useRef<THREE.Group>(null!);
+  const sendTimer = useRef(0);
   const modelUrl = useMemo(
-    () => CHARACTER_MODELS[Math.floor(Math.random() * CHARACTER_MODELS.length)],
-    [],
+    () => CHARACTER_MODELS[characterIndex ?? Math.floor(Math.random() * CHARACTER_MODELS.length)],
+    [characterIndex],
   );
   const { scene, animations } = useGLTF(modelUrl);
   const { actions, names } = useAnimations(animations, group);
@@ -109,6 +113,16 @@ export function Player({ onSignboardProximity, joystickInput, positionRef }: Pla
     // 위치 공유
     if (positionRef) {
       (positionRef as React.MutableRefObject<THREE.Vector3>).current.copy(group.current.position);
+    }
+
+    // 서버에 위치 전송 (throttle)
+    if (onPositionUpdate) {
+      sendTimer.current += delta;
+      if (sendTimer.current >= SEND_INTERVAL) {
+        sendTimer.current = 0;
+        const pos = group.current.position;
+        onPositionUpdate(pos.x, pos.y, pos.z, group.current.rotation.y, isMoving ? "walk" : "idle");
+      }
     }
 
     // 표지판 proximity 감지
