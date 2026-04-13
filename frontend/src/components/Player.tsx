@@ -1,9 +1,18 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF, useAnimations } from "@react-three/drei";
 import * as THREE from "three";
-import puppyWalkUrl from "../assets/characters/puppy_walinkg.glb?url";
 import type { JoystickInput } from "./VirtualJoystick";
+
+import puppyUrl from "../assets/characters/puppy_walinkg.glb?url";
+import fawnUrl from "../assets/characters/fawn_walking.glb?url";
+import omoknuneUrl from "../assets/characters/omoknune_walking.glb?url";
+import penguinUrl from "../assets/characters/penguin_walk.glb?url";
+import redPandaUrl from "../assets/characters/red_panda_walking.glb?url";
+import tigerUrl from "../assets/characters/tiger_walking.glb?url";
+import hamsterUrl from "../assets/characters/hamster_walking.glb?url";
+
+const CHARACTER_MODELS = [puppyUrl, fawnUrl, omoknuneUrl, penguinUrl, redPandaUrl, tigerUrl, hamsterUrl];
 
 const MOVE_SPEED = 2.5;
 const ROTATION_SPEED = 8;
@@ -19,7 +28,11 @@ interface PlayerProps {
 
 export function Player({ onSignboardProximity, joystickInput, positionRef }: PlayerProps) {
   const group = useRef<THREE.Group>(null!);
-  const { scene, animations } = useGLTF(puppyWalkUrl);
+  const modelUrl = useMemo(
+    () => CHARACTER_MODELS[Math.floor(Math.random() * CHARACTER_MODELS.length)],
+    [],
+  );
+  const { scene, animations } = useGLTF(modelUrl);
   const { actions, names } = useAnimations(animations, group);
   const keysRef = useRef({ forward: false, backward: false, left: false, right: false });
   const wasNearRef = useRef(false);
@@ -120,4 +133,4 @@ export function Player({ onSignboardProximity, joystickInput, positionRef }: Pla
   );
 }
 
-useGLTF.preload(puppyWalkUrl);
+CHARACTER_MODELS.forEach((url) => useGLTF.preload(url));
