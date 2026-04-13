@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { useGLTF, useAnimations } from "@react-three/drei";
 import * as THREE from "three";
 import puppyWalkUrl from "../assets/characters/puppy_walinkg.glb?url";
+import type { JoystickInput } from "./VirtualJoystick";
 
 const MOVE_SPEED = 2.5;
 const ROTATION_SPEED = 8;
@@ -12,9 +13,11 @@ const PROXIMITY_THRESHOLD = 1.8;
 
 interface PlayerProps {
   onSignboardProximity?: (isNear: boolean) => void;
+  joystickInput?: React.RefObject<JoystickInput>;
+  positionRef?: React.RefObject<THREE.Vector3>;
 }
 
-export function Player({ onSignboardProximity }: PlayerProps) {
+export function Player({ onSignboardProximity, joystickInput, positionRef }: PlayerProps) {
   const group = useRef<THREE.Group>(null!);
   const { scene, animations } = useGLTF(puppyWalkUrl);
   const { actions, names } = useAnimations(animations, group);
@@ -57,14 +60,23 @@ export function Player({ onSignboardProximity }: PlayerProps) {
     if (!group.current) return;
 
     const { forward, backward, left, right } = keysRef.current;
-    const isMoving = forward || backward || left || right;
+    const joy = joystickInput?.current;
+    const hasKeyboard = forward || backward || left || right;
+    const hasJoystick = joy && (Math.abs(joy.x) > 0 || Math.abs(joy.z) > 0);
+    const isMoving = hasKeyboard || hasJoystick;
 
     if (isMoving) {
       const dir = new THREE.Vector3();
-      if (forward) dir.z -= 1;
-      if (backward) dir.z += 1;
-      if (left) dir.x -= 1;
-      if (right) dir.x += 1;
+
+      if (hasJoystick) {
+        dir.x = joy.x;
+        dir.z = joy.z;
+      } else {
+        if (forward) dir.z -= 1;
+        if (backward) dir.z += 1;
+        if (left) dir.x -= 1;
+        if (right) dir.x += 1;
+      }
       dir.normalize();
 
       group.current.rotation.y = Math.atan2(dir.x, dir.z);
@@ -79,6 +91,11 @@ export function Player({ onSignboardProximity }: PlayerProps) {
       if (names.length > 0) {
         actions[names[0]]!.setEffectiveTimeScale(0);
       }
+    }
+
+    // 위치 공유
+    if (positionRef) {
+      (positionRef as React.MutableRefObject<THREE.Vector3>).current.copy(group.current.position);
     }
 
     // 표지판 proximity 감지

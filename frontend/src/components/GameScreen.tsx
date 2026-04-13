@@ -13,11 +13,7 @@ const Container = styled.div`
   padding: 40px 20px;
   background: url("/animal_crossing_sky.png") no-repeat center center / cover;
   color: white;
-  font-family:
-    "Pretendard",
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: "Cafe24Ssurround", sans-serif;
   overflow-y: auto;
 `;
 

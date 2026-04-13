@@ -9,11 +9,7 @@ const Container = styled.div`
   justify-content: center;
   min-height: 100vh;
   background: url("/animal_crossing_pattern.jpg") repeat;
-  font-family:
-    "Pretendard",
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: "Cafe24Ssurround", sans-serif;
 `;
 
 const Card = styled.div`

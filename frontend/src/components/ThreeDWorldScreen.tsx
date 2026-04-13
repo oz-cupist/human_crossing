@@ -7,6 +7,7 @@ import worldModelUrl from "../assets/animal_crossing_world.glb?url";
 import { Player } from "./Player";
 import { WeddingCouple } from "./WeddingCouple";
 import { GuestbookModal } from "./GuestbookModal";
+import { VirtualJoystick, type JoystickInput } from "./VirtualJoystick";
 
 const WORLD_MODEL_PATH = worldModelUrl;
 
@@ -80,6 +81,28 @@ function LoadingState() {
   );
 }
 
+const CAMERA_LERP = 0.05;
+
+function CameraFollow({
+  targetRef,
+  controlsRef,
+}: {
+  targetRef: React.RefObject<THREE.Vector3>;
+  controlsRef: React.RefObject<any>;
+}) {
+  useFrame(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    const target = targetRef.current;
+    controls.target.lerp(
+      new THREE.Vector3(target.x, target.y + 1, target.z),
+      CAMERA_LERP,
+    );
+  });
+
+  return null;
+}
+
 function WorldModel() {
   const { scene } = useGLTF(WORLD_MODEL_PATH);
 
@@ -98,12 +121,19 @@ function WorldModel() {
 export function ThreeDWorldScreen() {
   const [showGuestbook, setShowGuestbook] = useState(false);
   const [isNearSignboard, setIsNearSignboard] = useState(false);
+  const joystickRef = useRef<JoystickInput>({ x: 0, z: 0 });
+  const playerPosRef = useRef<THREE.Vector3>(new THREE.Vector3(0, 0.3, 0));
+  const orbitRef = useRef<any>(null!);
 
   const handleSignboardProximity = useCallback((isNear: boolean) => {
     setIsNearSignboard(isNear);
     if (isNear) {
       setShowGuestbook(true);
     }
+  }, []);
+
+  const handleJoystickMove = useCallback((input: JoystickInput) => {
+    joystickRef.current = input;
   }, []);
 
   return (
@@ -137,9 +167,11 @@ export function ThreeDWorldScreen() {
         <Suspense fallback={<LoadingState />}>
           <WorldModel />
           <WeddingCouple />
-          <Player onSignboardProximity={handleSignboardProximity} />
+          <Player onSignboardProximity={handleSignboardProximity} joystickInput={joystickRef} positionRef={playerPosRef} />
         </Suspense>
+        <CameraFollow targetRef={playerPosRef} controlsRef={orbitRef} />
         <OrbitControls
+          ref={orbitRef}
           makeDefault
           enableDamping
           dampingFactor={0.08}
@@ -161,6 +193,8 @@ export function ThreeDWorldScreen() {
           <Hint>표지판 근처입니다! 클릭하여 방명록 열기</Hint>
         )}
       </OverlayCard>
+
+      <VirtualJoystick onMove={handleJoystickMove} />
 
       {showGuestbook && (
         <GuestbookModal onClose={() => setShowGuestbook(false)} />
