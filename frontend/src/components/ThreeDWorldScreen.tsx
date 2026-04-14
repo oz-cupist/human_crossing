@@ -214,7 +214,7 @@ export function ThreeDWorldScreen() {
           )}
         </Description>
         {isNearSignboard && !showGuestbook && (
-          <Hint>표지판 근처입니다! 클릭하여 방명록 열기</Hint>
+          <Hint>신랑신부에게 따뜻한 말을 전해보세요!</Hint>
         )}
       </OverlayCard>
 
