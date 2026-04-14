@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import styled from "styled-components";
 import { useGame } from "../contexts/useGame";
+import { useAnimalese } from "../hooks/useAnimalese";
 import type { GuestbookEntry } from "../types/guestbook";
 import {
   getGuestbook,
@@ -143,6 +144,7 @@ const EmptyText = styled.p`
 
 export function GuestbookPanel() {
   const { player } = useGame();
+  const { speak } = useAnimalese();
   const [entries, setEntries] = useState<GuestbookEntry[]>([]);
   const [content, setContent] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -168,9 +170,11 @@ export function GuestbookPanel() {
     e.preventDefault();
     if (!content.trim() || loading) return;
     setLoading(true);
+    const message = content.trim();
     try {
-      await createGuestbook(player.id, content.trim());
+      await createGuestbook(player.id, message);
       setContent("");
+      speak(message);
       await fetchEntries();
     } catch (err) {
       console.error("방명록 작성 실패:", err);
@@ -207,12 +211,12 @@ export function GuestbookPanel() {
   return (
     <Card>
       <Header>
-        <Title>방명록 ({entries.length}개)</Title>
+        <Title>축하 메시지 ({entries.length}개)</Title>
       </Header>
 
       <WriteForm onSubmit={handleCreate}>
         <TextInput
-          placeholder="메시지를 남겨보세요..."
+          placeholder="신랑신부에게 따뜻한 한마디를 전해보세요!"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           maxLength={500}
@@ -223,7 +227,7 @@ export function GuestbookPanel() {
         </SubmitButton>
       </WriteForm>
 
-      {entries.length === 0 && <EmptyText>아직 방명록이 없습니다.</EmptyText>}
+      {entries.length === 0 && <EmptyText>아직 메시지가 없습니다. 첫 번째로 축하해주세요!</EmptyText>}
 
       {entries.map((entry) => (
         <EntryItem key={entry.id}>
