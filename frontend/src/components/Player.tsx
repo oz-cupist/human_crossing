@@ -17,8 +17,8 @@ export const CHARACTER_MODELS = [puppyUrl, fawnUrl, omoknuneUrl, penguinUrl, red
 const MOVE_SPEED = 2.5;
 const ROTATION_SPEED = 8;
 
-const SIGNBOARD_POSITION = { x: 2, z: 5 };
-const PROXIMITY_THRESHOLD = 1.8;
+const COUPLE_POSITION = { x: 0, z: -3.2 };
+const PROXIMITY_THRESHOLD = 2.5;
 const SEND_INTERVAL = 1 / 15; // 초당 15회 전송
 
 interface PlayerProps {
@@ -125,11 +125,11 @@ export function Player({ onSignboardProximity, joystickInput, positionRef, chara
       }
     }
 
-    // 표지판 proximity 감지
+    // 신랑신부 proximity 감지
     if (onSignboardProximity) {
       const pos = group.current.position;
-      const dx = pos.x - SIGNBOARD_POSITION.x;
-      const dz = pos.z - SIGNBOARD_POSITION.z;
+      const dx = pos.x - COUPLE_POSITION.x;
+      const dz = pos.z - COUPLE_POSITION.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
       const isNear = dist < PROXIMITY_THRESHOLD;
 

@@ -28,8 +28,10 @@ const ModalContainer = styled.div`
   position: relative;
   width: 90%;
   max-width: 480px;
-  max-height: 80vh;
-  overflow-y: auto;
+  max-height: 600px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   animation: ${slideUp} 0.3s ease;
 `;
 

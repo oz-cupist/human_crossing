@@ -8,6 +8,7 @@ import {
   updateGuestbook,
   deleteGuestbook,
 } from "../api/guestbook";
+import { useAnimalese } from "../hooks/useAnimalese";
 
 const Card = styled.div`
   background: rgba(255, 255, 255, 0.75);
@@ -17,6 +18,15 @@ const Card = styled.div`
   max-width: 500px;
   width: 100%;
   color: #2d3436;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+const EntryList = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 `;
 
 const Header = styled.div`
@@ -143,6 +153,7 @@ const EmptyText = styled.p`
 
 export function GuestbookPanel() {
   const { player } = useGame();
+  const { speak } = useAnimalese();
   const [entries, setEntries] = useState<GuestbookEntry[]>([]);
   const [content, setContent] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -169,8 +180,10 @@ export function GuestbookPanel() {
     if (!content.trim() || loading) return;
     setLoading(true);
     try {
-      await createGuestbook(player.id, content.trim());
+      const message = content.trim();
+      await createGuestbook(player.id, message);
       setContent("");
+      speak(message);
       await fetchEntries();
     } catch (err) {
       console.error("방명록 작성 실패:", err);
@@ -207,12 +220,12 @@ export function GuestbookPanel() {
   return (
     <Card>
       <Header>
-        <Title>방명록 ({entries.length}개)</Title>
+        <Title>축하 한마디 ({entries.length}개)</Title>
       </Header>
 
       <WriteForm onSubmit={handleCreate}>
         <TextInput
-          placeholder="메시지를 남겨보세요..."
+          placeholder="신랑신부에게 축하의 한마디를 남겨주세요!"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           maxLength={500}
@@ -223,59 +236,61 @@ export function GuestbookPanel() {
         </SubmitButton>
       </WriteForm>
 
-      {entries.length === 0 && <EmptyText>아직 방명록이 없습니다.</EmptyText>}
+      <EntryList>
+        {entries.length === 0 && <EmptyText>아직 축하 메시지가 없습니다. 첫 번째로 남겨보세요!</EmptyText>}
 
-      {entries.map((entry) => (
-        <EntryItem key={entry.id}>
-          <EntryHeader>
-            <AuthorName>{entry.authorNickname}</AuthorName>
-            <EntryDate>
-              {new Date(entry.createdAt).toLocaleString("ko-KR")}
-            </EntryDate>
-          </EntryHeader>
+        {entries.map((entry) => (
+          <EntryItem key={entry.id}>
+            <EntryHeader>
+              <AuthorName>{entry.authorNickname}</AuthorName>
+              <EntryDate>
+                {new Date(entry.createdAt).toLocaleString("ko-KR")}
+              </EntryDate>
+            </EntryHeader>
 
-          {editingId === entry.id ? (
-            <WriteForm
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleUpdate(entry.id);
-              }}
-            >
-              <TextInput
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                maxLength={500}
-                autoFocus
-              />
-              <SubmitButton type="submit" disabled={!editContent.trim()}>
-                저장
-              </SubmitButton>
-              <ActionButton type="button" onClick={() => setEditingId(null)}>
-                취소
-              </ActionButton>
-            </WriteForm>
-          ) : (
-            <>
-              <EntryContent>{entry.content}</EntryContent>
-              {entry.authorId === player.id && (
-                <Actions>
-                  <ActionButton
-                    onClick={() => {
-                      setEditingId(entry.id);
-                      setEditContent(entry.content);
-                    }}
-                  >
-                    수정
-                  </ActionButton>
-                  <DeleteButton onClick={() => handleDelete(entry.id)}>
-                    삭제
-                  </DeleteButton>
-                </Actions>
-              )}
-            </>
-          )}
-        </EntryItem>
-      ))}
+            {editingId === entry.id ? (
+              <WriteForm
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleUpdate(entry.id);
+                }}
+              >
+                <TextInput
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  maxLength={500}
+                  autoFocus
+                />
+                <SubmitButton type="submit" disabled={!editContent.trim()}>
+                  저장
+                </SubmitButton>
+                <ActionButton type="button" onClick={() => setEditingId(null)}>
+                  취소
+                </ActionButton>
+              </WriteForm>
+            ) : (
+              <>
+                <EntryContent>{entry.content}</EntryContent>
+                {entry.authorId === player.id && (
+                  <Actions>
+                    <ActionButton
+                      onClick={() => {
+                        setEditingId(entry.id);
+                        setEditContent(entry.content);
+                      }}
+                    >
+                      수정
+                    </ActionButton>
+                    <DeleteButton onClick={() => handleDelete(entry.id)}>
+                      삭제
+                    </DeleteButton>
+                  </Actions>
+                )}
+              </>
+            )}
+          </EntryItem>
+        ))}
+      </EntryList>
     </Card>
   );
 }
